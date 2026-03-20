@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { YoutubeTranscript } from 'youtube-transcript-api'
+import TranscriptClient from 'youtube-transcript-api'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -21,8 +21,10 @@ export async function POST(request: Request) {
     }
 
     // Get transcript
-    const transcriptEntries = await YoutubeTranscript.fetchTranscript(videoId);
-    const transcriptContent = transcriptEntries.map(e => e.text).join(' ');
+    const client = new TranscriptClient();
+    await client.ready;
+    const transcriptData = await client.getTranscript(videoId);
+    const transcriptContent = transcriptData.lines.map((l: any) => l.text).join(' ');
 
     // Summarize with Gemini
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
