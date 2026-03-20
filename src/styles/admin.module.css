@@ -1,0 +1,63 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.statCard {
+  background: var(--background);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+.tableContainer {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusActive {
+  background: rgba(0, 200, 0, 0.1);
+  color: #008800;
+}
+
+.statusInactive {
+  background: rgba(200, 0, 0, 0.1);
+  color: #cc0000;
+}

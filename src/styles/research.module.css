@@ -1,0 +1,133 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.searchBox {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 40px -15px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--background) 0%, rgba(138, 43, 226, 0.05) 100%);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.queryInput {
+  width: 100%;
+  padding: 1.25rem 3.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 1.125rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.queryInput:focus {
+  border-color: #8A2BE2;
+  box-shadow: 0 0 0 4px rgba(138, 43, 226, 0.1);
+  outline: none;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.25rem;
+  color: #8A2BE2;
+}
+
+.researchButton {
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  background: #8A2BE2;
+  color: white;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.researchButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(138, 43, 226, 0.4);
+}
+
+.loadingSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3rem;
+}
+
+.loadingSteps {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+.stepActive {
+  color: #8A2BE2;
+  font-weight: 600;
+}
+
+.results {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  line-height: 1.8;
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(138, 43, 226, 0.05);
+  border-radius: 1rem;
+  border-left: 4px solid #8A2BE2;
+}
+
+.sourceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+.sourceLink {
+  color: #8A2BE2;
+  text-decoration: underline;
+  font-weight: 500;
+}
