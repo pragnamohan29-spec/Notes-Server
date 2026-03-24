@@ -77,7 +77,9 @@ export default function YoutubeSummarizer() {
       {result && (
         <div className={styles.resultSection}>
           <div className={styles.videoInfo}>
-            <div className={styles.thumbnail}></div>
+            <div className={styles.videoIcon}>
+              <Youtube size={48} color="#FF0000" />
+            </div>
             <div>
               <div className={styles.videoTitle}>{result.title}</div>
               <div className={styles.videoMeta}>{result.channel}</div>
