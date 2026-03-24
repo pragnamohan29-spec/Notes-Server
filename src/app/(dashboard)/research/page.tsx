@@ -22,33 +22,38 @@ export default function ResearchTool() {
     setLoading(true);
     setResults(null);
     
-    // Simulate multi-step loading
-    for (let i = 0; i < steps.length; i++) {
-      setActiveStep(i);
-      await new Promise(r => setTimeout(r, 1500));
-    }
+    try {
+      // Simulate multi-step loading for UI polish
+      for (let i = 0; i < steps.length - 1; i++) {
+        setActiveStep(i);
+        await new Promise(r => setTimeout(r, 1000));
+      }
 
-    setResults({
-      answer: `
-        <h2>Research Findings: ${query}</h2>
-        <p>Based on a comprehensive search of academic papers and industry reports, here is a detailed synthesis of your query.</p>
-        
-        <h3>Current Trends</h3>
-        <p>The field is rapidly evolving with major players investing heavily in distributed AI systems. Recent breakthroughs suggest a 40% increase in efficiency when utilizing decentralized compute frameworks [1].</p>
-        
-        <h3>Key Challenges</h3>
-        <p>Privacy and data sovereignty remain the primary blockers for enterprise adoption. Regulatory frameworks like GDPR and the upcoming EU AI Act are forcing companies to rethink their data pipelines [2].</p>
-        
-        <h3>Future Outlook</h3>
-        <p>Experts predict a shift towards "Federated Learning" models that allow for collaborative AI training without compromising individual data privacy [3].</p>
-      `,
-      sources: [
-        { id: 1, title: 'AI Infrastructure Report 2024', url: 'https://example.com/report' },
-        { id: 2, title: 'Journal of Future Compute', url: 'https://example.com/journal' },
-        { id: 3, title: 'TechCrunch Analysis: AI Sovereignty', url: 'https://techcrunch.com/analysis' },
-      ]
-    });
-    setLoading(false);
+      const response = await fetch('/api/research', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      setActiveStep(steps.length - 1);
+      setResults({
+        answer: data.research,
+        sources: [
+          { id: 1, title: 'AI Synthesis Report', url: '#' },
+          { id: 2, title: 'Gemini Research Output', url: '#' }
+        ]
+      });
+    } catch (error: any) {
+      console.error('Research error:', error);
+      alert(error.message || 'Failed to perform research');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -12,26 +12,31 @@ export default function YoutubeSummarizer() {
   async function handleSummarize() {
     if (!url) return;
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setResult({
-        title: 'How to Build a Second Brain with AI',
-        channel: 'Tiago Forte',
-        thumbnail: 'https://img.youtube.com/vi/placeholder/maxresdefault.jpg',
-        summary: `
-          <h3>Key Takeaways</h3>
-          <ul>
-            <li><strong>The Power of Capture:</strong> AI can now automate the capture process, making it easier to gather information from various sources without manual effort.</li>
-            <li><strong>AI-Assisted Curation:</strong> Use LLMs to summarize long documents and videos, allowing you to focus on high-level synthesis rather than consuming everything.</li>
-            <li><strong>The CODE Method:</strong> Capture, Organize, Distill, Express. AI particularly excels at the "Distill" phase by identifying core themes.</li>
-            <li><strong>Future of Productivity:</strong> We are moving towards "Human-AI Co-creation" where our digital systems act as proactive partners.</li>
-          </ul>
-          <h3>Conclusion</h3>
-          <p>By integrating AI into your productivity workflow, you can handle significantly more information while reducing the cognitive load of management.</p>
-        `
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
       });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      setResult({
+        title: 'Video Summary',
+        channel: 'YouTube Video',
+        summary: data.summary
+      });
+    } catch (error: any) {
+      console.error('Summarization error:', error);
+      alert(error.message || 'Failed to summarize video');
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   }
 
   return (
