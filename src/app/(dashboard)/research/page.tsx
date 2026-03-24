@@ -42,7 +42,7 @@ export default function ResearchTool() {
 
       setActiveStep(steps.length - 1);
       setResults({
-        answer: data.research,
+        answer: data.results,
         sources: [
           { id: 1, title: 'AI Synthesis Report', url: '#' },
           { id: 2, title: 'Gemini Research Output', url: '#' }
