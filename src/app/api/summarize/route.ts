@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import TranscriptClient from 'youtube-transcript-api'
+import { fetchTranscript } from 'youtube-transcript'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -25,15 +25,13 @@ export async function POST(request: Request) {
     // Get transcript
     let transcriptContent = '';
     try {
-      const client = new TranscriptClient();
-      await client.ready;
-      const transcriptData = await client.getTranscript(videoId);
+      const transcriptData = await fetchTranscript(videoId);
       
-      if (!transcriptData || !transcriptData.lines) {
+      if (!transcriptData || transcriptData.length === 0) {
         throw new Error('Transcript data is empty or unavailable for this video.');
       }
       
-      transcriptContent = transcriptData.lines.map((l: any) => l.text).join(' ');
+      transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
     } catch (transcriptError: any) {
       console.error('Transcription failed:', transcriptError);
       return NextResponse.json({ 
