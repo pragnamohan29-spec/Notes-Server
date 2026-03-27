@@ -68,7 +68,7 @@ export default function LoginPage() {
           </button>
 
           <p style={{ marginTop: '2rem', fontSize: '0.75rem', color: 'var(--secondary)', textAlign: 'center' }}>
-            By continuing, you agree to Aura AI's <br />
+            By continuing, you agree to Notes Server&apos;s <br />
             <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Terms</a> and <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Privacy</a>.
           </p>
         </div>
