@@ -31,6 +31,13 @@ export async function POST(request: Request) {
     const result = await model.generateContent(prompt);
     const researchResults = result.response.text();
 
+    // Save to history
+    await supabase.from('research_history').insert({
+      user_id: user.id,
+      query,
+      results: researchResults
+    });
+
     return NextResponse.json({ results: researchResults })
   } catch (error: any) {
     console.error('Research failed:', error);

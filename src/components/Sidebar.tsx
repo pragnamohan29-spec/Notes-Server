@@ -10,16 +10,17 @@ import {
   Youtube, 
   Search, 
   Settings, 
+  History,
   LogOut,
   ShieldCheck
 } from 'lucide-react';
 import styles from '../styles/layout.module.css';
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Notes', href: '/notes', icon: StickyNote },
   { name: 'Summarizer', href: '/youtube', icon: Youtube },
   { name: 'Research', href: '/research', icon: Search },
+  { name: 'History', href: '/history', icon: History },
 ];
 
 export default function Sidebar() {
