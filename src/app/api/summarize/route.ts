@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { fetchTranscript } from 'youtube-transcript'
+import axios from 'axios'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -25,23 +26,43 @@ export async function POST(request: Request) {
     // Get transcript
     let transcriptContent = '';
     try {
+      // Primary: Direct YouTube scraping
       const transcriptData = await fetchTranscript(videoId);
-      
-      if (!transcriptData || transcriptData.length === 0) {
-        throw new Error('Transcript data is empty or unavailable for this video.');
+      if (transcriptData && transcriptData.length > 0) {
+        transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
+      } else {
+        throw new Error('Direct transcript empty');
       }
-      
-      transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
-    } catch (transcriptError: any) {
-      console.error('Transcription failed:', transcriptError);
-      return NextResponse.json({ 
-        error: 'Could not retrieve transcript. This video might have captions disabled or be restricted.' 
-      }, { status: 400 });
+    } catch (scraperError: any) {
+      console.log('Direct scraper failed, trying youtube-transcript.io with user key...');
+      try {
+        // Fallback: User's provided service with key
+        const response = await axios.post('https://www.youtube-transcript.io/api/transcripts', {
+          ids: [videoId]
+        }, {
+          headers: {
+            'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.data?.[0]?.lines) {
+          transcriptContent = response.data[0].lines.map((l: any) => l.text).join(' ');
+        } else {
+          throw new Error('Service transcript empty');
+        }
+      } catch (serviceError: any) {
+        console.error('Transcription failed entirely:', serviceError);
+        return NextResponse.json({ 
+          error: 'Could not retrieve transcript. This video might have captions disabled or be restricted.' 
+        }, { status: 400 });
+      }
     }
 
     // Summarize with Gemini
+    console.log('Transcript retrieved, length:', transcriptContent.length);
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     
     const prompt = `You are an expert AI summarizer. Below is a transcript of a YouTube video. 
       Please provide a concise, high-quality summary with key takeaways and structured bullet points.
