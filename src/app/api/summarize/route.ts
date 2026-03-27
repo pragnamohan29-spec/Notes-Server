@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // Summarize with Gemini
     console.log('Transcript retrieved, length:', transcriptContent.length);
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     
     const prompt = `You are an expert AI summarizer. Below is a transcript of a YouTube video. 
       Please provide a concise, high-quality summary with key takeaways and structured bullet points.

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     
     // Use Gemini for deep research and synthesis
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' }); 
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' }); 
     
     const prompt = `You are a professional deep research assistant. 
       A user has asked the following query: "${query}"

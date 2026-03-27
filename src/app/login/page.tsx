@@ -75,7 +75,7 @@ export default function LoginPage() {
       </main>
 
       <footer className={styles.footer}>
-        &copy; 2024 Notes Server. Built with Next.js, Supabase, and Google Gemini.
+          &copy; {new Date().getFullYear()} Notes Server. All rights reserved.
       </footer>
     </div>
   );
