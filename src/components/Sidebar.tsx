@@ -14,7 +14,7 @@ import {
   LogOut,
   ShieldCheck
 } from 'lucide-react';
-import styles from '../styles/layout.module.css';
+import styles from '@/styles/layout.module.css';
 
 const navItems = [
   { name: 'Notes', href: '/notes', icon: StickyNote },

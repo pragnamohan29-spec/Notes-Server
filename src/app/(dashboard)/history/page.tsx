@@ -11,7 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import styles from '../../../styles/history.module.css';
+import styles from '@/styles/history.module.css';
 
 interface ResearchItem {
   id: string;

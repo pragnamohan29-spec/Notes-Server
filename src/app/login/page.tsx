@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { Sparkles, CheckCircle2, Zap, Shield, Globe } from 'lucide-react';
-import styles from '../../styles/login.module.css';
+import styles from '@/styles/login.module.css';
 
 export default function LoginPage() {
   const supabase = createClient();
