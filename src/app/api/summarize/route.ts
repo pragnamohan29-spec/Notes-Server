@@ -72,6 +72,20 @@ export async function POST(request: Request) {
     const result = await model.generateContent(prompt);
     const summary = result.response.text();
 
+    // Save to unified history
+    const { error: historyError } = await supabase
+      .from('youtube_history')
+      .insert({
+        user_id: user.id,
+        url: url,
+        video_id: videoId,
+        summary: summary
+      });
+      
+    if (historyError) {
+      console.error('Failed to save to youtube_history:', historyError);
+    }
+
     return NextResponse.json({ summary })
   } catch (error: any) {
     console.error('Summarization failed:', error);
