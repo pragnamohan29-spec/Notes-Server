@@ -1,7 +1,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #0070f3;
+  --primary: #a855f7;
   --secondary: #666666;
   --border: #eaeaea;
 }
@@ -9,7 +9,7 @@
 [data-theme='dark'] {
   --background: #0a0a0a;
   --foreground: #ededed;
-  --primary: #2997ff;
+  --primary: #d8b4fe;
   --secondary: #888888;
   --border: #333333;
 }

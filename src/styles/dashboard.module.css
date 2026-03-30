@@ -19,7 +19,7 @@
 .card:hover {
   transform: translateY(-4px);
   border-color: var(--primary);
-  box-shadow: 0 10px 30px -10px rgba(0, 112, 243, 0.15);
+  box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.15);
 }
 
 .cardTitle {
@@ -44,7 +44,7 @@
 }
 
 .statCard {
-  background: rgba(0, 112, 243, 0.05);
+  background: rgba(168, 85, 247, 0.05);
   border-radius: 0.75rem;
   padding: 1rem 1.5rem;
   flex: 1;
@@ -94,7 +94,7 @@
 }
 
 .recentItem:hover {
-  background: rgba(0, 112, 243, 0.02);
+  background: rgba(168, 85, 247, 0.02);
 }
 
 .iconWrapper {
@@ -104,6 +104,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 112, 243, 0.1);
+  background: rgba(168, 85, 247, 0.1);
   color: var(--primary);
 }

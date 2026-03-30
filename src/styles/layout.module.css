@@ -54,12 +54,12 @@
 }
 
 .navItem:hover {
-  background: rgba(0, 112, 243, 0.05);
+  background: rgba(168, 85, 247, 0.05);
   color: var(--primary);
 }
 
 .navItemActive {
-  background: rgba(0, 112, 243, 0.1);
+  background: rgba(168, 85, 247, 0.1);
   color: var(--primary);
 }
 

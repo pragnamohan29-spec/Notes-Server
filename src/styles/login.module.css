@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top right, rgba(0, 112, 243, 0.05), transparent),
+  background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.05), transparent),
               radial-gradient(circle at bottom left, rgba(138, 43, 226, 0.05), transparent);
   color: var(--foreground);
 }
@@ -33,7 +33,7 @@
 .badge {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background: rgba(0, 112, 243, 0.1);
+  background: rgba(168, 85, 247, 0.1);
   color: var(--primary);
   border-radius: 2rem;
   font-size: 0.875rem;
@@ -114,7 +114,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
 }
 
 .logoText {
