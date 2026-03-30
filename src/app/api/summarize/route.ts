@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { fetchTranscript } from 'youtube-transcript'
+import { getSubtitles } from 'youtube-captions-scraper'
 import axios from 'axios'
 
 export async function POST(request: Request) {
@@ -26,22 +26,23 @@ export async function POST(request: Request) {
     // Get transcript
     let transcriptContent = '';
     try {
-      // Primary: Direct YouTube scraping
-      const transcriptData = await fetchTranscript(videoId);
+      // Primary: Advanced direct scraping (more reliable on Edge IPs)
+      const transcriptData = await getSubtitles({ videoID: videoId, lang: 'en' });
       if (transcriptData && transcriptData.length > 0) {
         transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
       } else {
         throw new Error('Direct transcript empty');
       }
     } catch (scraperError: any) {
-      console.log('Direct scraper failed, trying youtube-transcript.io with user key...');
+      console.log('Direct scraper failed, trying secondary fallback ...');
       try {
         // Fallback: User's provided service with key
         const response = await axios.post('https://www.youtube-transcript.io/api/transcripts', {
           ids: [videoId]
         }, {
           headers: {
-            'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY}`,
+            'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY || ''}`,
+            'x-api-key': process.env.YOUTUBE_TRANSCRIPT_IO_KEY || '',
             'Content-Type': 'application/json'
           }
         });
@@ -52,9 +53,9 @@ export async function POST(request: Request) {
           throw new Error('Service transcript empty');
         }
       } catch (serviceError: any) {
-        console.error('Transcription failed entirely:', serviceError);
+        console.error('Transcription failed entirely:', serviceError.response?.data || serviceError.message);
         return NextResponse.json({ 
-          error: 'Could not retrieve transcript. This video might have captions disabled or be restricted.' 
+          error: 'Could not retrieve transcript. This video might have captions disabled, or the global transcription server is currently overloaded. Please try again soon.' 
         }, { status: 400 });
       }
     }
