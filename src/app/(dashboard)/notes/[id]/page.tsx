@@ -2,141 +2,161 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Trash2, Loader2 } from 'lucide-react';
-import { getNotes, updateNote, deleteNote, createNote, Note } from '@/lib/notes';
-import NoteEditor from '@/components/NoteEditor';
-import styles from '../../../../styles/notes.module.css';
+import { ArrowLeft, Save, Loader2, FileDown } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import Editor from '@/components/Editor';
+import ResearchAssistant from '@/components/ResearchAssistant';
 
-export default function NoteDetailPage({ params }: { params: { id: string } }) {
+export default function NoteEditorPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const isNew = params.id === 'new';
-  
-  const [note, setNote] = useState<Partial<Note> | null>(null);
-  const [loading, setLoading] = useState(!isNew);
+  const supabase = createClient();
+  const isNewNote = params.id === 'new';
+
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isNew) {
-      loadNote();
-    } else {
-      setNote({ title: '', content: { type: 'doc', content: [] }, tag: 'Personal' });
-    }
-  }, [params.id]);
-
-  async function loadNote() {
-    try {
-      const notes = await getNotes();
-      const found = notes.find(n => n.id === params.id);
-      if (found) {
-        setNote(found);
-      } else {
-        router.push('/notes');
-      }
-    } catch (error) {
-      console.error('Failed to load note:', error);
-      router.push('/notes');
-    } finally {
+    if (isNewNote) {
       setLoading(false);
+      return;
     }
-  }
-
-  async function handleSave() {
-    if (!note || !note.title) return;
-    setSaving(true);
-    try {
-      if (isNew) {
-        await createNote(note);
-      } else {
-        await updateNote(params.id, note);
+    
+    // Fetch existing note if editing
+    const fetchNote = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notes')
+          .select('*')
+          .eq('id', params.id)
+          .single();
+          
+        if (error) throw error;
+        if (data) {
+          setTitle(data.title);
+          setContent(data.content || '');
+        }
+      } catch (err) {
+        console.error('Failed to load note:', err);
+      } finally {
+        setLoading(false);
       }
-      router.push('/notes');
-      router.refresh();
-    } catch (error) {
-      console.error('Failed to save note:', error);
+    };
+    
+    fetchNote();
+  }, [params.id, isNewNote, supabase]);
+
+  const handleSave = async () => {
+    if (!title.trim() && !content.trim()) return;
+    setSaving(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const noteData = {
+        title: title.trim() || 'Untitled Note',
+        content,
+        user_id: user.id,
+      };
+
+      if (isNewNote) {
+        const { data, error } = await supabase.from('notes').insert({ ...noteData, tags: ['Research'] }).select().single();
+        if (error) throw error;
+        if (data) router.replace(`/notes/${data.id}`);
+      } else {
+        const { error } = await supabase.from('notes').update({
+          ...noteData,
+          updated_at: new Date().toISOString()
+        }).eq('id', params.id);
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      alert('Error saving note.');
     } finally {
       setSaving(false);
     }
-  }
+  };
 
-  async function handleDelete() {
-    if (isNew) {
-      router.push('/notes');
-      return;
-    }
-    if (!confirm('Are you sure you want to delete this note?')) return;
-    
-    try {
-      await deleteNote(params.id);
-      router.push('/notes');
-      router.refresh();
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-    }
-  }
+  const insertResearch = (markdownContext: string) => {
+    // Append the newly researched string exactly as HTML tags to feed directly to tiptap
+    const htmlSnippet = markdownContext
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.*)\*/gim, '<em>$1</em>')
+      .split('\n')
+      .map(line => {
+        if (line.match(/<h|<blockquote|<ul>|<li/)) return line;
+        if (line.trim().startsWith('- ')) return `<ul><li>${line.substring(2)}</li></ul>`;
+        return line.trim() ? `<p>${line}</p>` : '<br/>';
+      })
+      .join('');
+      
+    // Append to existing content
+    setContent(prevContent => prevContent + '<br/><h2>Research Notes</h2>' + htmlSnippet);
+  };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <Loader2 className="animate-spin" size={32} color="var(--primary)" />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', paddingLeft: '240px' }}>
+        <Loader2 className="animate-spin" size={40} color="var(--primary)" />
       </div>
     );
   }
 
-  if (!note) return null;
-
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <button onClick={() => router.push('/notes')} className={styles.menuButton}>
-          <ArrowLeft size={20} />
-          <span>Back</span>
-        </button>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {!isNew && (
-            <button onClick={handleDelete} className={styles.menuButton} style={{ color: '#ff4444' }}>
-              <Trash2 size={20} />
-            </button>
-          )}
+    <div style={{ padding: '2rem', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Header Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
           <button 
-            onClick={handleSave} 
-            className={styles.newButton} 
-            disabled={saving || !note.title}
-            style={{ minWidth: '100px', justifyContent: 'center' }}
+            onClick={() => router.push('/notes')}
+            style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
           >
-            {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-            <span style={{ marginLeft: '0.5rem' }}>{saving ? 'Saving...' : 'Save'}</span>
+            <ArrowLeft size={20} />
           </button>
-        </div>
-      </header>
-
-      <div className={styles.editorContainer}>
-        <div className={styles.editorHeader}>
+          
           <input 
             type="text" 
-            placeholder="Note Title" 
-            className={styles.titleInput}
-            value={note.title}
-            onChange={(e) => setNote({ ...note, title: e.target.value })}
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            placeholder="Note Title..."
+            style={{ fontSize: '2rem', fontWeight: 800, border: 'none', background: 'transparent', outline: 'none', color: '#0f172a', width: '100%', fontFamily: 'inherit' }}
           />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {['Personal', 'Work', 'Ideas', 'Design'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setNote({ ...note, tag: t })}
-                className={`${styles.tag} ${note.tag === t ? '' : styles.tagInactive}`}
-                style={{ cursor: 'pointer', border: 'none' }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
         </div>
-        
-        <NoteEditor 
-          content={note.content} 
-          onChange={(content) => setNote({ ...note, content })} 
-        />
+
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            style={{ padding: '0.75rem 2rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 10px 15px -3px rgba(168, 85, 247, 0.3)', transition: 'all 0.2s', opacity: saving ? 0.7 : 1 }}
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            {saving ? 'Saving...' : 'Save Document'}
+          </button>
+        </div>
       </div>
+
+      {/* Main Dual-Pane Workspace */}
+      <div style={{ display: 'flex', gap: '1.5rem', width: '100%', flex: 1, minHeight: 0 }}>
+        
+        {/* Left Side: Full Rich Text Editor */}
+        <div style={{ flex: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Editor content={content} onChange={setContent} />
+        </div>
+
+        {/* Right Side: Deep Research Assistant */}
+        <div style={{ flex: 1, minWidth: '350px', height: '100%' }}>
+          <ResearchAssistant onInsert={insertResearch} />
+        </div>
+      </div>
+
     </div>
   );
 }
