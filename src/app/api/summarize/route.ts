@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { fetchTranscript } from 'youtube-transcript'
 import { getSubtitles } from 'youtube-captions-scraper'
 import axios from 'axios'
 
@@ -23,40 +24,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid or unsupported YouTube URL. Please use a direct link to the video.' }, { status: 400 });
     }
 
-    // Get transcript
+    // Get transcript via Cascading Fallbacks
     let transcriptContent = '';
+    
     try {
-      // Primary: Advanced direct scraping (more reliable on Edge IPs)
-      const transcriptData = await getSubtitles({ videoID: videoId, lang: 'en' });
+      // Primary: Native Youtube-Transcript (Best for Localhost, auto-detects language)
+      const transcriptData = await fetchTranscript(videoId);
       if (transcriptData && transcriptData.length > 0) {
         transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
       } else {
-        throw new Error('Direct transcript empty');
+        throw new Error('Native transcript empty');
       }
-    } catch (scraperError: any) {
-      console.log('Direct scraper failed, trying secondary fallback ...');
+    } catch (primaryError: any) {
+      console.log('Primary scraper blocked or failed, trying secondary Edge fallback...');
+      
       try {
-        // Fallback: User's provided service with key
-        const response = await axios.post('https://www.youtube-transcript.io/api/transcripts', {
-          ids: [videoId]
-        }, {
-          headers: {
-            'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY || ''}`,
-            'x-api-key': process.env.YOUTUBE_TRANSCRIPT_IO_KEY || '',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.data?.[0]?.lines) {
-          transcriptContent = response.data[0].lines.map((l: any) => l.text).join(' ');
+        // Secondary: Youtube-Captions-Scraper (Bypasses some Edge IP blocks)
+        const transcriptData = await getSubtitles({ videoID: videoId });
+        if (transcriptData && transcriptData.length > 0) {
+          transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
         } else {
-          throw new Error('Service transcript empty');
+          throw new Error('Edge scraper empty');
         }
-      } catch (serviceError: any) {
-        console.error('Transcription failed entirely:', serviceError.response?.data || serviceError.message);
-        return NextResponse.json({ 
-          error: 'Could not retrieve transcript. This video might have captions disabled, or the global transcription server is currently overloaded. Please try again soon.' 
-        }, { status: 400 });
+      } catch (secondaryError: any) {
+        console.log('Secondary scraper failed, trying API key fallback...');
+        
+        try {
+          // Final Fallback: User's provided service with key
+          const response = await axios.post('https://www.youtube-transcript.io/api/transcripts', {
+            ids: [videoId]
+          }, {
+            headers: {
+              'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY || ''}`,
+              'x-api-key': process.env.YOUTUBE_TRANSCRIPT_IO_KEY || '',
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.data?.[0]?.lines) {
+            transcriptContent = response.data[0].lines.map((l: any) => l.text).join(' ');
+          } else {
+            throw new Error('Service transcript empty');
+          }
+        } catch (serviceError: any) {
+          console.error('All transcription methods failed entirely:', serviceError.response?.data || serviceError.message);
+          return NextResponse.json({ 
+            error: 'Could not retrieve transcript. This video might have captions disabled, or the global transcription server is currently overloaded. Please try again soon.' 
+          }, { status: 400 });
+        }
       }
     }
 
