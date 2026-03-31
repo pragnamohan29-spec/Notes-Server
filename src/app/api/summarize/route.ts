@@ -24,55 +24,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid or unsupported YouTube URL. Please use a direct link to the video.' }, { status: 400 });
     }
 
-    // Get transcript via Cascading Fallbacks
+    // Get transcript using a Unified Proxy Approach (Bypasses Vercel IP blocks)
     let transcriptContent = '';
     
     try {
-      // Primary: Native Youtube-Transcript (Best for Localhost, auto-detects language)
-      const transcriptData = await fetchTranscript(videoId);
+      // We wrap the native fetch function to route all YouTube requests through an open proxy
+      const proxyFetch = (url: URL | RequestInfo, options?: RequestInit) => {
+        const targetUrl = url.toString();
+        const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        return fetch(proxiedUrl, options);
+      };
+
+      // Native Youtube-Transcript with our custom proxy injector
+      const transcriptData = await fetchTranscript(videoId, { fetch: proxyFetch });
+      
       if (transcriptData && transcriptData.length > 0) {
         transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
       } else {
-        throw new Error('Native transcript empty');
+        throw new Error('Transcript empty');
       }
-    } catch (primaryError: any) {
-      console.log('Primary scraper blocked or failed, trying secondary Edge fallback...');
-      
-      try {
-        // Secondary: Youtube-Captions-Scraper (Bypasses some Edge IP blocks)
-        const transcriptData = await getSubtitles({ videoID: videoId });
-        if (transcriptData && transcriptData.length > 0) {
-          transcriptContent = transcriptData.map((l: any) => l.text).join(' ');
-        } else {
-          throw new Error('Edge scraper empty');
-        }
-      } catch (secondaryError: any) {
-        console.log('Secondary scraper failed, trying API key fallback...');
-        
-        try {
-          // Final Fallback: User's provided service with key
-          const response = await axios.post('https://www.youtube-transcript.io/api/transcripts', {
-            ids: [videoId]
-          }, {
-            headers: {
-              'Authorization': `Bearer ${process.env.YOUTUBE_TRANSCRIPT_IO_KEY || ''}`,
-              'x-api-key': process.env.YOUTUBE_TRANSCRIPT_IO_KEY || '',
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.data?.[0]?.lines) {
-            transcriptContent = response.data[0].lines.map((l: any) => l.text).join(' ');
-          } else {
-            throw new Error('Service transcript empty');
-          }
-        } catch (serviceError: any) {
-          console.error('All transcription methods failed entirely:', serviceError.response?.data || serviceError.message);
-          return NextResponse.json({ 
-            error: 'Could not retrieve transcript. This video might have captions disabled, or the global transcription server is currently overloaded. Please try again soon.' 
-          }, { status: 400 });
-        }
-      }
+    } catch (error: any) {
+      console.error('Unified transcription failed:', error.message || error);
+      return NextResponse.json({ 
+        error: 'Could not retrieve transcript. This video might have captions disabled, or the global proxy is currently overloaded. Please try again soon.' 
+      }, { status: 400 });
     }
 
     // Summarize with Gemini
