@@ -42,10 +42,14 @@ export default function HistoryPage() {
         supabase.from('youtube_history').select('*')
       ]);
 
-      if (researchRes.error) throw researchRes.error;
-      if (youtubeRes.error) throw youtubeRes.error;
+      if (researchRes.error && researchRes.error.code !== '42P01') {
+        console.error('Research history error:', researchRes.error);
+      }
+      if (youtubeRes.error && youtubeRes.error.code !== '42P01') {
+        console.error('YouTube history error:', youtubeRes.error);
+      }
 
-      // Map Research items
+      // Map Research items (ignore if table is completely missing - code 42P01)
       const researchItems: HistoryItem[] = (researchRes.data || []).map(item => ({
         id: `res-${item.id}`,
         type: 'research',
